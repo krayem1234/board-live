@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  boards    BoardMember[]
+  cards     Card[]   @relation("CardAssignee")
+  resetTokens PasswordResetToken[]
+}
+
+model Board {
+  id        String   @id @default(cuid())
+  title     String
+  createdAt DateTime @default(now())
+  lists     List[]
+  members   BoardMember[]
+}
+
+model BoardMember {
+  id      String @id @default(cuid())
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  role    String @default("member")
+
+  @@unique([boardId, userId])
+}
+
+model List {
+  id       String @id @default(cuid())
+  title    String
+  position Int
+  board    Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardId  String
+  cards    Card[]
+}
+
+model Card {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  position    Int
+  list        List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  listId      String
+  assignee    User?    @relation("CardAssignee", fields: [assigneeId], references: [id])
+  assigneeId  String?
+  dueDate     DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
