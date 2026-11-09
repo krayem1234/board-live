@@ -14,7 +14,23 @@ export class AuthService {
     if (existing) throw new ConflictException('Un compte existe déjà avec cet email')
     const hash = await bcrypt.hash(password, 10)
     const user = await this.prisma.user.create({ data: { email, name, password: hash } })
+    await this.applyPendingInvites(user.id, email)
     return this.signToken(user.id, user.email, user.name)
+  }
+
+  private async applyPendingInvites(userId: string, email: string) {
+    const invites = await this.prisma.boardInvite.findMany({ where: { email } })
+    if (invites.length === 0) return
+    await this.prisma.$transaction([
+      ...invites.map((invite) =>
+        this.prisma.boardMember.upsert({
+          where: { boardId_userId: { boardId: invite.boardId, userId } },
+          update: {},
+          create: { boardId: invite.boardId, userId, role: invite.role },
+        }),
+      ),
+      this.prisma.boardInvite.deleteMany({ where: { email } }),
+    ])
   }
 
   async login(email: string, password: string) {

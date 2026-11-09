@@ -24,6 +24,7 @@ model Board {
   createdAt DateTime @default(now())
   lists     List[]
   members   BoardMember[]
+  invites   BoardInvite[]
 }
 
 model BoardMember {
@@ -35,6 +36,17 @@ model BoardMember {
   role    String @default("member")
 
   @@unique([boardId, userId])
+}
+
+model BoardInvite {
+  id        String   @id @default(cuid())
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardId   String
+  email     String
+  role      String   @default("member")
+  createdAt DateTime @default(now())
+
+  @@unique([boardId, email])
 }
 
 model List {

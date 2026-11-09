@@ -72,7 +72,13 @@ export class BoardsService {
     const user = await this.prisma.user.findUnique({ where: { email } })
 
     if (!user) {
-      // Pas de compte avec cet email : on envoie une invitation par mail, pas d'ajout direct.
+      // Pas de compte avec cet email : on garde une invitation en attente, appliquée
+      // automatiquement si cette personne crée un compte avec cet email plus tard.
+      await this.prisma.boardInvite.upsert({
+        where: { boardId_email: { boardId, email } },
+        update: {},
+        create: { boardId, email, role: 'member' },
+      })
       await this.mail.sendBoardInvite(email, boardTitle, inviterName, false)
       return { invited: true, accountExists: false, email }
     }
