@@ -1,6 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
-function authHeader(token: string | null) {
+function authHeader(token: string | null): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
@@ -10,8 +10,8 @@ export async function apiFetch(path: string, token: string | null, options: Requ
     headers: {
       'Content-Type': 'application/json',
       ...authHeader(token),
-      ...(options.headers || {}),
-    },
+      ...(options.headers as Record<string, string> | undefined),
+    } as Record<string, string>,
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
