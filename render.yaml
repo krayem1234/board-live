@@ -1,0 +1,27 @@
+databases:
+  - name: board-live-db
+    plan: free
+    databaseName: boardlive
+    user: boardlive
+
+services:
+  - type: web
+    name: board-live-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm run start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: board-live-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
